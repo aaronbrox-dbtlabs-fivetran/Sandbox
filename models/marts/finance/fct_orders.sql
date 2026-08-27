@@ -18,6 +18,7 @@ order_fact as (
     select orders.order_id
         , orders.customer_id
         , order_payments.order_total as amount 
+        , orders.order_date
     from orders
     join order_payments 
         on orders.order_id = order_payments.order_id
