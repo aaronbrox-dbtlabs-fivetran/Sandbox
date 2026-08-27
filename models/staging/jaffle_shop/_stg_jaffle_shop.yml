@@ -1,12 +1,16 @@
 models:
   - name: stg_jaffle_shop__customers
-    description: The grain of this table is one unique customer per row.
+    description: Clean customer records from the Jaffle Shop application database, renamed for consistent analytics use. One row per customer.
     columns:
       - name: customer_id
-        description: Primary key for the customers table
+        description: Application-generated customer identifier sourced from `customers.id`; the primary key and join key for customer orders.
         data_tests:
           - unique
           - not_null
+      - name: first_name
+        description: Customer's given name as recorded in the application, with no additional normalization.
+      - name: last_name
+        description: Customer's family name as recorded in the application, with no additional normalization.
 
   - name: stg_jaffle_shop__orders
     description: One order per row
@@ -17,7 +21,8 @@ models:
           - unique
           - not_null
       - name: status
-        description: "{{ doc('oreder_status') }}"
+        description: "{{ doc('order_status') }}"
+
         data_tests:
           - accepted_values:
               arguments:

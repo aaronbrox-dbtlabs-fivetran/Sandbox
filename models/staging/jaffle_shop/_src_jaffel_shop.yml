@@ -8,11 +8,11 @@ sources:
         description:  Raw customers data. 
         columns:
           - name: id
-            description: Primary key for the customers data
-            description: primary key
+            description: Application-generated identifier and primary key for raw customer records.
             data_tests:
               - unique
-              - not_null        
+              - not_null
+
       - name: orders
         description:  Raw orders data. 
         config:
