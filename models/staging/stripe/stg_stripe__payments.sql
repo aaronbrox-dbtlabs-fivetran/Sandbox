@@ -1,11 +1,10 @@
 select 
-    r.id as customer_id
-    , r.orderid as order_id
-    , r.paymentmethod
-    , r.status 
-    , r.amount 
-    , r.created 
-    , r._batched_at
+    id as payment_id
+    , orderid as order_id
+    , paymentmethod as payment_method
+    , status as payment_status
+    , amount as payment_amount
+    , created as payment_created
+    , _batched_at
 
-
-from raw.stripe.payment as r 
+from raw.stripe.payment
