@@ -1,0 +1,55 @@
+models:
+  - name: fct_order_items
+    description: >
+      Order-line fact table enriched with order, part, and supplier attributes.
+      One row per order and line number.
+    columns:
+      - name: order_item_key
+        description: Unique key formed from the order key and line number.
+        data_tests:
+          - unique
+          - not_null
+
+      - name: order_key
+        description: Order associated with the line item.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_orders')
+                field: order_key
+
+      - name: line_number
+        description: Line number within the order.
+        data_tests:
+          - not_null
+
+      - name: part_key
+        description: Part sold on the order line.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_parts')
+                field: part_key
+
+      - name: supplier_key
+        description: Supplier providing the part on the order line.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_suppliers')
+                field: supplier_key
+
+      - name: net_item_amount
+        description: Extended price after the line-item discount and before tax.
+
+      - name: total_item_amount
+        description: Net item amount including line-item tax.
+
+      - name: estimated_supply_cost
+        description: Ordered quantity multiplied by the supplier-specific unit cost.
+
+      - name: estimated_margin_amount
+        description: Net item amount less estimated supply cost.
