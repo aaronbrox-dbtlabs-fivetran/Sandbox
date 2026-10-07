@@ -1,0 +1,18 @@
+sources: 
+  - name: tpch_now
+    database:  raw_abrox
+    schema: tpch_now
+    tables:
+      - name: lineitem
+      - name: orders
+
+  - name: tpch_sf001
+    database: raw_abrox
+    schema: tpch_sf001
+    tables: 
+      - name: partsupp
+      - name: part
+      - name: supplier
+
+
+      
