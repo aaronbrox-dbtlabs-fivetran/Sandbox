@@ -5,6 +5,14 @@ sources:
     tables:
       - name: lineitem
       - name: orders
+    config:
+      freshness: 
+        warn_after:
+          count: 1
+          period: day
+        error_after:
+          count: 2
+          period: day
 
   - name: tpch_sf001
     database: raw_abrox
@@ -13,6 +21,16 @@ sources:
       - name: partsupp
       - name: part
       - name: supplier
+    config: 
+      freshness: 
+        warn_after: 
+          count: 1
+          period: day
+        error_after: 
+          count: 2
+          period: day
+        
+        
 
 
       
