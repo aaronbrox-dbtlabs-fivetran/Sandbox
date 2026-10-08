@@ -1,0 +1,6 @@
+data_tests:
+  - name: assert_stg_tpch_orders_positive_values
+    description: >
+      Protects downstream sales calculations from malformed order records by requiring
+      order keys, customer keys, and source order totals to be strictly positive.
+      Shipping priority is intentionally excluded because zero is valid in TPC-H.

@@ -1,55 +1,127 @@
 models:
   - name: fct_order_items
     description: >
-      Order-line fact table enriched with order, part, and supplier attributes.
-      One row per order and line number.
+      Business-facing order-line fact table for demonstrations of sales, fulfillment, product,
+      and supplier analysis. One row represents one line number within an order. The model enriches
+      transactional amounts with the supplier-specific product record used to fulfill the line.
+      Estimated cost and margin are directional operational measures, not posted accounting values.
     columns:
       - name: order_item_key
-        description: Unique key formed from the order key and line number.
+        description: Stable text key formed from `order_key` and `line_number`; primary key for the fact.
         data_tests:
           - unique
           - not_null
-
       - name: order_key
-        description: Order associated with the line item.
+        description: Degenerate order identifier used to group all lines from the same customer order.
         data_tests:
           - not_null
           - relationships:
               arguments:
                 to: ref('stg_tpch_orders')
                 field: order_key
-
       - name: line_number
-        description: Line number within the order.
+        description: One-based sequence of the line within its order.
         data_tests:
           - not_null
-
       - name: part_key
-        description: Part sold on the order line.
+        description: Product sold on the line and the join key to future product dimensions.
         data_tests:
           - not_null
           - relationships:
               arguments:
                 to: ref('stg_tpch_parts')
                 field: part_key
-
       - name: supplier_key
-        description: Supplier providing the part on the order line.
+        description: Supplier selected to fulfill the product on this line.
         data_tests:
           - not_null
           - relationships:
               arguments:
                 to: ref('stg_tpch_suppliers')
                 field: supplier_key
-
+      - name: customer_key
+        description: Source customer identifier retained as a degenerate dimension because customer master data is out of scope.
+      - name: order_status
+        description: Header lifecycle code used to separate open, partial, and fulfilled demand.
+      - name: order_date
+        description: Business date on which the order was placed; primary date for sales trending.
+      - name: order_time
+        description: Placement timestamp used for intraday order-pattern demonstrations.
+      - name: order_priority
+        description: Operational priority used to compare demand and fulfillment by service level.
+      - name: clerk
+        description: Source-system operator associated with the order.
+      - name: shipping_priority
+        description: Numeric shipping-priority indicator inherited from the order header.
+      - name: quantity
+        description: Units ordered on the line; additive across all dimensions in this fact.
+      - name: extended_price
+        description: Source line value before discount and tax; additive at order-line grain.
+      - name: discount_rate
+        description: Fractional line discount. The demo feed currently contains zero, but the model supports future non-zero values.
+      - name: tax_rate
+        description: Fractional tax rate applied after discount. The demo feed currently contains zero.
+      - name: discount_amount
+        description: Monetary reduction calculated as `extended_price * discount_rate`.
       - name: net_item_amount
-        description: Extended price after the line-item discount and before tax.
-
+        description: Extended price after discount and before tax; preferred sales measure for margin analysis.
+      - name: tax_amount
+        description: Tax calculated on the discounted line value.
       - name: total_item_amount
-        description: Net item amount including line-item tax.
-
+        description: Customer-facing line total after discount and tax.
+      - name: supply_cost
+        description: Supplier-specific unit acquisition cost captured from the part-supplier record.
       - name: estimated_supply_cost
-        description: Ordered quantity multiplied by the supplier-specific unit cost.
-
+        description: Directional line cost calculated as `quantity * supply_cost`.
       - name: estimated_margin_amount
-        description: Net item amount less estimated supply cost.
+        description: Directional margin calculated as `net_item_amount - estimated_supply_cost`; excludes overhead and posted adjustments.
+      - name: return_flag
+        description: Return disposition code used to isolate accepted, returned, and non-returned sales lines.
+      - name: line_status
+        description: Fulfillment state of the individual line.
+      - name: ship_date
+        description: Date the line was or is expected to be shipped.
+      - name: commit_date
+        description: Supplier commitment date used to evaluate fulfillment promises.
+      - name: receipt_date
+        description: Date delivery was recorded; supports transit and lateness analysis with the shipping dates.
+      - name: shipping_instructions
+        description: Handling instruction provided to fulfillment.
+      - name: shipping_mode
+        description: Transportation mode selected for delivery analysis.
+      - name: part_name
+        description: Synthetic product name used in end-user tables and demonstrations.
+      - name: manufacturer
+        description: Highest-level manufacturer grouping in the product hierarchy.
+      - name: brand
+        description: Commercial brand nested beneath the manufacturer.
+      - name: part_type
+        description: Product classification combining category, finish, and material.
+      - name: part_size
+        description: Abstract numeric size used for product-assortment analysis.
+      - name: container
+        description: Packaging format in which the product is stored and shipped.
+      - name: retail_price
+        description: Catalog reference price for comparison with realized line value; not the amount charged.
+      - name: available_quantity
+        description: Supplier-reported inventory for the part; a current attribute repeated across matching order lines.
+      - name: supplier_name
+        description: Display name for the supplier that fulfilled the line.
+      - name: supplier_address
+        description: Source mailing address retained for demonstration; not normalized or validated as a geography.
+      - name: nation_key
+        description: Supplier nation identifier retained without a nation dimension in this sandbox.
+      - name: phone_number
+        description: Supplier contact number in source display format.
+      - name: account_balance
+        description: Supplier account balance at extract time; negative values are valid and should not be treated as test failures.
+      - name: line_item_comment
+        description: Free-text note from the transactional line record.
+      - name: order_comment
+        description: Free-text note from the parent order header.
+      - name: part_supplier_comment
+        description: Free-text note specific to the supplier-product sourcing relationship.
+      - name: part_comment
+        description: Free-text catalog note inherited from the part master.
+      - name: supplier_comment
+        description: Free-text operational note inherited from the supplier master.
