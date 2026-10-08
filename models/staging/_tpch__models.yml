@@ -1,0 +1,165 @@
+models:
+  - name: stg_tpch_orders
+    description: >
+      Clean order-header interface for the transactional feed. The model renames source
+      fields without changing grain and provides one row per order for downstream joins.
+    columns:
+      - name: order_key
+        description: Primary key for an order and the join key used by line items.
+        data_tests:
+          - unique
+          - not_null
+      - name: customer_key
+        description: Source customer identifier retained for segmentation; customer master enrichment is outside this demo.
+      - name: order_status
+        description: Header lifecycle code indicating whether an order is open, partially fulfilled, or fulfilled.
+      - name: total_price
+        description: Source-calculated total for the entire order; non-additive when joined to individual lines.
+      - name: order_date
+        description: Business date on which the customer placed the order.
+      - name: order_time
+        description: Order-placement timestamp used for time-of-day demonstrations.
+      - name: order_priority
+        description: Operational priority used to sequence fulfillment work.
+      - name: clerk
+        description: Source clerk identifier representing the operator associated with the order.
+      - name: shipping_priority
+        description: Numeric shipping-priority indicator; zero is a valid source value.
+      - name: comment
+        description: Free-text order note retained for traceability to the raw feed.
+
+  - name: stg_tpch_line_items
+    description: >
+      Clean order-line interface at one row per order and line number. It preserves the
+      source grain while exposing business-friendly names for pricing and fulfillment fields.
+    columns:
+      - name: order_key
+        description: Parent order identifier; forms the model grain with `line_number`.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_orders')
+                field: order_key
+      - name: part_key
+        description: Product ordered on the line and the join key to the staged part catalog.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_parts')
+                field: part_key
+      - name: supplier_key
+        description: Supplier selected for fulfillment and the join key to the staged supplier master.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_suppliers')
+                field: supplier_key
+      - name: line_number
+        description: One-based sequence of the line within its order; forms the model grain with `order_key`.
+        data_tests:
+          - not_null
+      - name: quantity
+        description: Number of units ordered on the line.
+      - name: extended_price
+        description: Source line value before discount and tax in the demo currency.
+      - name: discount_rate
+        description: Fractional discount applied to `extended_price`; currently zero in the demo feed.
+      - name: tax_rate
+        description: Fractional tax applied after discount; currently zero in the demo feed.
+      - name: return_flag
+        description: Return disposition code used to separate accepted, returned, and non-returned lines.
+      - name: line_status
+        description: Fulfillment state of the line, represented as open or fulfilled.
+      - name: ship_date
+        description: Date the line was or is expected to be shipped.
+      - name: commit_date
+        description: Supplier commitment date used to evaluate promised fulfillment timing.
+      - name: receipt_date
+        description: Date delivery was recorded for the line.
+      - name: shipping_instructions
+        description: Handling instructions passed from the order to fulfillment.
+      - name: shipping_mode
+        description: Transportation mode selected for delivery analysis.
+      - name: comment
+        description: Free-text line note retained for traceability and text-field demonstrations.
+
+  - name: stg_tpch_parts
+    description: >
+      Clean product-catalog interface with one row per part. It standardizes naming while
+      preserving the synthetic merchandising and packaging attributes from TPC-H.
+    columns:
+      - name: part_key
+        description: Primary key for a catalog part.
+        data_tests:
+          - unique
+          - not_null
+      - name: part_name
+        description: Synthetic descriptive name used for product search and display.
+      - name: manufacturer
+        description: Highest-level manufacturer grouping in the demo product hierarchy.
+      - name: brand
+        description: Commercial brand nested beneath the manufacturer.
+      - name: part_type
+        description: Product classification combining category, finish, and material.
+      - name: part_size
+        description: Abstract numeric size attribute used to demonstrate assortment analysis.
+      - name: container
+        description: Packaging format in which the part is stored and shipped.
+      - name: retail_price
+        description: Catalog reference price; it is not the realized line price or supplier acquisition cost.
+      - name: comment
+        description: Free-text catalog note retained from the source.
+
+  - name: stg_tpch_suppliers
+    description: >
+      Clean supplier-master interface with one row per supplier. Contact and balance fields
+      are retained so the final demo can support operational supplier analysis.
+    columns:
+      - name: supplier_key
+        description: Primary key for a supplier and the join key used by sourcing records.
+        data_tests:
+          - unique
+          - not_null
+      - name: supplier_name
+        description: Display name assigned to the supplier in the source system.
+      - name: supplier_address
+        description: Source mailing address retained for demonstration; not modeled as a normalized location.
+      - name: nation_key
+        description: Nation identifier retained without enrichment because geographic dimensions are outside scope.
+      - name: phone_number
+        description: Supplier contact number in source display format.
+      - name: account_balance
+        description: Supplier account balance; negative balances are valid and represent credit or payable positions.
+      - name: comment
+        description: Free-text supplier note retained from the master record.
+
+  - name: stg_tpch_part_suppliers
+    description: >
+      Clean supplier-product bridge at one row per part and supplier pairing. It captures
+      which suppliers can provide each part, together with current availability and unit cost.
+    columns:
+      - name: part_key
+        description: Product component of the composite sourcing key.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_parts')
+                field: part_key
+      - name: supplier_key
+        description: Supplier component of the composite sourcing key.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_suppliers')
+                field: supplier_key
+      - name: available_quantity
+        description: Units the supplier currently reports as available for the associated part.
+      - name: supply_cost
+        description: Supplier-specific unit acquisition cost used for estimated margin analysis.
+      - name: comment
+        description: Free-text note describing the supplier-part sourcing relationship.

@@ -1,0 +1,146 @@
+models:
+  - name: order_items
+    description: >
+      Order lines enriched with their parent order header at one row per order and line number.
+      This model centralizes line-level commercial calculations so marts and demos use the same
+      discount, tax, and total logic. `order_total_price` remains a non-additive header attribute.
+    columns:
+      - name: order_key
+        description: Parent order identifier; forms the model grain with `line_number`.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_orders')
+                field: order_key
+      - name: line_number
+        description: One-based sequence within an order; forms the model grain with `order_key`.
+        data_tests:
+          - not_null
+      - name: part_key
+        description: Product sold on the order line.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_parts')
+                field: part_key
+      - name: supplier_key
+        description: Supplier selected to fulfill the ordered product.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_suppliers')
+                field: supplier_key
+      - name: customer_key
+        description: Source customer identifier copied from the order header for downstream segmentation.
+      - name: order_status
+        description: Header lifecycle code retained for filtering open, partial, and fulfilled demand.
+      - name: order_date
+        description: Business date on which the order was placed.
+      - name: order_time
+        description: Timestamp at which the order was placed, enabling intraday demonstrations.
+      - name: order_priority
+        description: Operational priority used to sequence fulfillment work.
+      - name: clerk
+        description: Source operator associated with the order.
+      - name: shipping_priority
+        description: Numeric shipping-priority indicator inherited from the order header.
+      - name: order_total_price
+        description: Total for the whole order; repeated across lines and therefore unsafe to sum at this grain.
+      - name: quantity
+        description: Units ordered on the line.
+      - name: extended_price
+        description: Source line value before discount and tax.
+      - name: discount_rate
+        description: Fractional line discount used in the standardized pricing calculation.
+      - name: tax_rate
+        description: Fractional tax applied to the discounted line value.
+      - name: discount_amount
+        description: Monetary discount calculated as `extended_price * discount_rate`.
+      - name: net_item_amount
+        description: Extended price after discount and before tax; the preferred line-level sales measure.
+      - name: tax_amount
+        description: Tax calculated on `net_item_amount` using the line tax rate.
+      - name: total_item_amount
+        description: Customer-facing line total after discount and tax.
+      - name: return_flag
+        description: Return disposition used to identify accepted, returned, and non-returned lines.
+      - name: line_status
+        description: Fulfillment state of the individual order line.
+      - name: ship_date
+        description: Date the line was or is expected to be shipped.
+      - name: commit_date
+        description: Supplier commitment date used for fulfillment-timing analysis.
+      - name: receipt_date
+        description: Date delivery was recorded for the line.
+      - name: shipping_instructions
+        description: Handling instructions provided to fulfillment.
+      - name: shipping_mode
+        description: Transportation mode selected for the line.
+      - name: line_item_comment
+        description: Free-text note originating from the line-item record.
+      - name: order_comment
+        description: Free-text note originating from the parent order header.
+
+  - name: part_suppliers
+    description: >
+      Supplier-specific product records enriched with catalog and supplier attributes at one row
+      per part and supplier pairing. The model gives downstream facts a single reusable lookup for
+      product context, supplier context, availability, and estimated unit cost.
+    columns:
+      - name: part_key
+        description: Product component of the composite sourcing grain.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_parts')
+                field: part_key
+      - name: supplier_key
+        description: Supplier component of the composite sourcing grain.
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_suppliers')
+                field: supplier_key
+      - name: part_name
+        description: Synthetic product name used for display and exploratory grouping.
+        data_tests:
+          - not_null
+      - name: manufacturer
+        description: Highest-level manufacturer grouping in the product hierarchy.
+      - name: brand
+        description: Commercial brand nested beneath the manufacturer.
+      - name: part_type
+        description: Product classification combining category, finish, and material.
+      - name: part_size
+        description: Abstract numeric size attribute used for assortment analysis.
+      - name: container
+        description: Packaging format used to store and ship the part.
+      - name: retail_price
+        description: Catalog reference price, separate from supplier cost and realized order value.
+      - name: available_quantity
+        description: Units currently reported as available from this supplier for this part.
+      - name: supply_cost
+        description: Supplier-specific unit acquisition cost used to estimate line margin.
+      - name: supplier_name
+        description: Display name for the supplier.
+        data_tests:
+          - not_null
+      - name: supplier_address
+        description: Source mailing address retained for supplier-operation demonstrations.
+      - name: nation_key
+        description: Supplier nation identifier retained without geographic enrichment.
+      - name: phone_number
+        description: Supplier contact number in source display format.
+      - name: account_balance
+        description: Supplier account balance; negative values are valid credit or payable positions.
+      - name: part_supplier_comment
+        description: Note specific to the supplier-part sourcing relationship.
+      - name: part_comment
+        description: Catalog note inherited from the part master.
+      - name: supplier_comment
+        description: Operational note inherited from the supplier master.
