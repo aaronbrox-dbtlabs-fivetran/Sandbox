@@ -1,36 +1,124 @@
-sources: 
+sources:
   - name: tpch_now
-    database:  raw_abrox
+    database: raw_abrox
     schema: tpch_now
-    tables:
-      - name: lineitem
-      - name: orders
     config:
-      freshness: 
+      freshness:
         warn_after:
           count: 1
           period: day
         error_after:
           count: 2
           period: day
+    tables:
+      - name: lineitem
+        columns:
+          - name: l_orderkey
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('tpch_now', 'orders')
+                    field: o_orderkey
+          - name: l_partkey
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('tpch_sf001', 'part')
+                    field: p_partkey
+          - name: l_suppkey
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('tpch_sf001', 'supplier')
+                    field: s_suppkey
+          - name: l_linenumber
+            data_tests:
+              - not_null
+          - name: l_returnflag
+            data_tests:
+              - not_null
+              - accepted_values:
+                  arguments:
+                    values: ['A', 'N', 'R']
+          - name: l_linestatus
+            data_tests:
+              - not_null
+              - accepted_values:
+                  arguments:
+                    values: ['F', 'O']
+
+      - name: orders
+        columns:
+          - name: o_orderkey
+            data_tests:
+              - unique
+              - not_null
+          - name: o_custkey
+            data_tests:
+              - not_null
+          - name: o_orderstatus
+            data_tests:
+              - not_null
+              - accepted_values:
+                  arguments:
+                    values: ['F', 'O', 'P']
+          - name: o_orderpriority
+            data_tests:
+              - not_null
+              - accepted_values:
+                  arguments:
+                    values:
+                      - 1-URGENT
+                      - 2-HIGH
+                      - 3-MEDIUM
+                      - 4-NOT SPECIFIED
+                      - 5-LOW
+          - name: o_totalprice
+            data_tests:
+              - not_null
 
   - name: tpch_sf001
     database: raw_abrox
     schema: tpch_sf001
-    tables: 
-      - name: partsupp
-      - name: part
-      - name: supplier
-    config: 
-      freshness: 
-        warn_after: 
+    config:
+      freshness:
+        warn_after:
           count: 1
           period: day
-        error_after: 
+        error_after:
           count: 2
           period: day
-        
-        
+    tables:
+      - name: partsupp
+        columns:
+          - name: ps_partkey
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('tpch_sf001', 'part')
+                    field: p_partkey
+          - name: ps_suppkey
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('tpch_sf001', 'supplier')
+                    field: s_suppkey
 
+      - name: part
+        columns:
+          - name: p_partkey
+            data_tests:
+              - unique
+              - not_null
 
-      
+      - name: supplier
+        columns:
+          - name: s_suppkey
+            data_tests:
+              - unique
+              - not_null

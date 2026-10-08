@@ -1,0 +1,70 @@
+models:
+  - name: stg_tpch_orders
+    description: One row per TPC-H order.
+    columns:
+      - name: order_key
+        data_tests:
+          - unique
+          - not_null
+
+  - name: stg_tpch_line_items
+    description: One row per line number within an order.
+    columns:
+      - name: order_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_orders')
+                field: order_key
+      - name: line_number
+        data_tests:
+          - not_null
+      - name: part_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_parts')
+                field: part_key
+      - name: supplier_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_suppliers')
+                field: supplier_key
+
+  - name: stg_tpch_parts
+    description: One row per TPC-H part.
+    columns:
+      - name: part_key
+        data_tests:
+          - unique
+          - not_null
+
+  - name: stg_tpch_suppliers
+    description: One row per TPC-H supplier.
+    columns:
+      - name: supplier_key
+        data_tests:
+          - unique
+          - not_null
+
+  - name: stg_tpch_part_suppliers
+    description: One row per part and supplier pairing.
+    columns:
+      - name: part_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_parts')
+                field: part_key
+      - name: supplier_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_suppliers')
+                field: supplier_key

@@ -1,0 +1,52 @@
+models:
+  - name: order_items
+    description: Order lines enriched with their parent order attributes.
+    columns:
+      - name: order_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_orders')
+                field: order_key
+      - name: line_number
+        data_tests:
+          - not_null
+      - name: part_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_parts')
+                field: part_key
+      - name: supplier_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_suppliers')
+                field: supplier_key
+
+  - name: part_suppliers
+    description: Part and supplier pairings enriched with part and supplier attributes.
+    columns:
+      - name: part_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_parts')
+                field: part_key
+      - name: supplier_key
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_tpch_suppliers')
+                field: supplier_key
+      - name: part_name
+        data_tests:
+          - not_null
+      - name: supplier_name
+        data_tests:
+          - not_null
